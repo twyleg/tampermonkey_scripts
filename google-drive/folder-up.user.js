@@ -2,7 +2,7 @@
  // ==UserScript==
  // @name         Google Drive - Folder Up
  // @namespace    http://tampermonkey.net/
- // @version      1.4
+ // @version      1.5
  // @description  Adds Up buttons on both sides of Drive breadcrumbs
  // @match        https://drive.google.com/drive/*
  // @grant        none
