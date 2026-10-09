@@ -2,7 +2,7 @@
  // ==UserScript==
  // @name         Schulmanager - Grade Import
  // @namespace    http://tampermonkey.net/
- // @version      1.1.0
+ // @version      1.2.0
  // @description  Import grades from JSON by student name
  // @match        https://*.schulmanager-online.de/*
  // @match        https://schulmanager-online.de/*
@@ -54,6 +54,27 @@
      // Import validation
      // --------------------------------------------------
 
+     function extractGrade(value) {
+         // Structured format:
+         // {
+         //   "points": "4",
+         //   "mark": "2"
+         // }
+         if (
+             value !== null &&
+             typeof value === 'object' &&
+             !Array.isArray(value)
+         ) {
+             value = value.mark;
+         }
+
+         // Prevent null / undefined from becoming
+         // the strings "null" or "undefined".
+         return value == null
+             ? ''
+             : String(value).trim();
+     }
+
      function checkImport(json) {
          const data = JSON.parse(json);
 
@@ -93,7 +114,9 @@
 
          for (const [rawName, rawGrade] of Object.entries(data)) {
              const name = normalize(rawName);
-             const grade = String(rawGrade).trim();
+
+             // Accept direct grades and structured objects.
+             const grade = extractGrade(rawGrade);
 
              if (seen.has(name)) {
                  plan.ambiguous.push(
@@ -382,6 +405,7 @@
 
                  results.textContent = lines.join('\n');
 
+                 // Never apply a partially invalid import.
                  if (
                      plan.invalid.length ||
                      plan.unknown.length ||
@@ -413,6 +437,7 @@
 
              const currentRows = getRows();
 
+             // Refuse to apply a stale preview.
              const stillValid = checkedPlan.updates.every(
                  item =>
                      item.input.isConnected &&
@@ -442,6 +467,12 @@
 
                  const count = checkedPlan.updates.length;
                  close();
+
+                 alert(
+                     `${count} grades entered.\n\n` +
+                     'Please review the grades and save ' +
+                     'them using Schulmanager.'
+                 );
 
              } catch (error) {
                  checkedPlan = null;
